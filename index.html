@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bài kiểm tra Quy trình &amp; Bảo mật — Phòng R&amp;D</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <style>
 :root{--red:#C22620;--gold:#D4AF37;--ink:#1A1A1A;--gray:#5A5A5A;--cream:#FBF6E4;--orange:#E07B00;
   --green:#2E7D32;--line:#E3D9BC;--bg:#F7F3E8}
@@ -69,6 +70,18 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 .who{font-size:13px;color:var(--gray);text-align:center;margin-bottom:6px}
 .who b{color:var(--ink)}
 .hidden{display:none}
+.rtab{width:100%;border-collapse:collapse;font-size:13px}
+.rtab th{background:var(--cream);font-family:'Oswald',sans-serif;font-weight:600;text-transform:uppercase;
+  font-size:11.5px;letter-spacing:.03em;text-align:left;padding:8px 9px;border:1px solid var(--line);white-space:nowrap}
+.rtab td{padding:7px 9px;border:1px solid var(--line);vertical-align:top}
+.rtab tr:nth-child(even) td{background:#FCFAF3}
+.rtab .dat{color:var(--green);font-weight:700}
+.rtab .fail{color:var(--red);font-weight:700}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1;min-width:90px;background:var(--cream);border-radius:10px;padding:10px 12px;text-align:center}
+.stat .n{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:var(--ink)}
+.stat .l{font-size:11.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.03em}
+.stat.ok .n{color:var(--green)} .stat.no .n{color:var(--red)}
 @media(max-width:520px){.head h1{font-size:19px}.card{padding:17px}}
 </style>
 </head>
@@ -90,6 +103,27 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
     <div class="hint">🔒 Có <b id="qCount">16</b> câu trắc nghiệm. Mức ĐẠT: đúng từ <b id="passN">13</b>/16 câu trở lên.</div>
     <button class="btn" id="btnStart">Bắt đầu làm bài</button>
     <div class="hint" id="startErr" style="color:var(--red)"></div>
+    <button class="btn ghost" id="btnGoAdmin" style="margin-top:10px;background:#EFE8D2">🔒 Xem kết quả (Quản lý)</button>
+  </div>
+
+  <!-- MÀN QUẢN LÝ: XEM KẾT QUẢ -->
+  <div class="card hidden" id="screenAdmin">
+    <div class="head" style="margin-bottom:14px"><div class="badge">Quản lý</div><h1 style="font-size:19px">Kết quả bài kiểm tra</h1></div>
+    <div id="adminLogin">
+      <label class="fld">Mật khẩu quản lý <span style="color:var(--red)">*</span></label>
+      <input type="password" id="adminPassIn" placeholder="Nhập mật khẩu để xem" autocomplete="off">
+      <button class="btn" id="btnAdminView">Xem kết quả</button>
+      <div class="hint" id="adminErr" style="color:var(--red)"></div>
+      <button class="btn ghost" id="btnAdminBack" style="margin-top:10px;background:#EFE8D2">← Về trang làm bài</button>
+    </div>
+    <div id="adminData" class="hidden">
+      <div id="adminStats"></div>
+      <div style="overflow-x:auto;margin-top:12px"><table class="rtab" id="adminTable"></table></div>
+      <div class="nav">
+        <button class="btn ghost prev" id="btnAdminBack2" style="background:#EFE8D2">← Về</button>
+        <button class="btn" id="btnAdminRefresh">↻ Tải lại</button>
+      </div>
+    </div>
   </div>
 
   <!-- MÀN 2: LÀM BÀI -->
@@ -127,8 +161,14 @@ var CONFIG = {
   passScore: 13,          // số câu đúng tối thiểu để ĐẠT
   shuffleOptions: true,   // xáo trộn vị trí đáp án mỗi lần
   shuffleQuestions: true, // xáo trộn thứ tự câu hỏi theo từng người
-  endpoint: ""            // URL Google Apps Script để lưu kết quả (nối sau)
+  // ==== Lưu kết quả lên Supabase (tái dùng project web chấm điểm sách) ====
+  supabaseUrl: "https://vnpljlowaqjxrmilqwaw.supabase.co",
+  supabaseKey: "sb_publishable_I8Qg7aI9OLifWG67Ven53w_7aXzJseI",
+  table: "quiz_rnd_results",
+  adminPass: "rnd2026"    // mật khẩu trang Xem kết quả (chị đổi được)
 };
+var SB = (window.supabase && CONFIG.supabaseUrl && CONFIG.supabaseKey)
+  ? window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey) : null;
 
 /* ==== NGÂN HÀNG CÂU HỎI (correct = chỉ số đáp án đúng trong mảng opts) ==== */
 var QUESTIONS = [
@@ -363,15 +403,17 @@ function saveResult(data){
     var arr=JSON.parse(localStorage.getItem('rnd_quiz_results')||'[]');
     arr.push(data); localStorage.setItem('rnd_quiz_results',JSON.stringify(arr));
   }catch(e){}
-  if(CONFIG.endpoint){
-    try{
-      fetch(CONFIG.endpoint,{method:'POST',mode:'no-cors',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify(data)});
-      $("saveMsg").textContent="Đã gửi kết quả về hệ thống. Cảm ơn bạn!";
-    }catch(e){$("saveMsg").textContent="Đã ghi nhận kết quả (ngoại tuyến).";}
+  if(SB){
+    $("saveMsg").textContent="Đang gửi kết quả...";
+    SB.from(CONFIG.table).insert([{
+      ho_ten:data.name, vi_tri:data.code, diem:data.score, tong:data.total,
+      phan_tram:data.percent, dat:data.pass
+    }]).then(function(r){
+      if(r.error){ $("saveMsg").textContent="⚠ Chưa gửi được kết quả lên hệ thống (đã lưu tạm trên máy)."; console.warn(r.error); }
+      else { $("saveMsg").textContent="✅ Đã gửi kết quả về hệ thống. Cảm ơn bạn!"; }
+    });
   }else{
-    $("saveMsg").textContent="Đã ghi nhận kết quả. Vui lòng chụp màn hình trang này gửi HCNS nếu được yêu cầu.";
+    $("saveMsg").textContent="Đã ghi nhận kết quả (ngoại tuyến).";
   }
 }
 
@@ -382,5 +424,63 @@ $("btnRetry").onclick=function(){
   $("screenStart").classList.remove("hidden");
   window.scrollTo(0,0);
 };
+
+/* ==== TRANG QUẢN LÝ: XEM KẾT QUẢ ==== */
+function showAdmin(){
+  $("screenStart").classList.add("hidden");
+  $("screenResult").classList.add("hidden");
+  $("screenQuiz").classList.add("hidden");
+  $("screenAdmin").classList.remove("hidden");
+  $("adminData").classList.add("hidden");
+  $("adminLogin").classList.remove("hidden");
+  $("adminPassIn").value=""; $("adminErr").textContent="";
+  window.scrollTo(0,0);
+}
+function backToStart(){
+  $("screenAdmin").classList.add("hidden");
+  $("screenStart").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+$("btnGoAdmin").onclick=showAdmin;
+$("btnAdminBack").onclick=backToStart;
+$("btnAdminBack2").onclick=backToStart;
+$("btnAdminView").onclick=function(){
+  if($("adminPassIn").value!==CONFIG.adminPass){$("adminErr").textContent="Sai mật khẩu.";return;}
+  $("adminErr").textContent="";
+  $("adminLogin").classList.add("hidden");
+  $("adminData").classList.remove("hidden");
+  loadAdmin();
+};
+$("btnAdminRefresh").onclick=loadAdmin;
+
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+function loadAdmin(){
+  $("adminStats").innerHTML='<div class="hint">Đang tải...</div>';
+  $("adminTable").innerHTML='';
+  if(!SB){$("adminStats").innerHTML='<div class="hint" style="color:var(--red)">Chưa kết nối hệ thống lưu kết quả.</div>';return;}
+  SB.from(CONFIG.table).select('*').order('created_at',{ascending:false}).then(function(r){
+    if(r.error){$("adminStats").innerHTML='<div class="hint" style="color:var(--red)">Lỗi tải dữ liệu: '+esc(r.error.message)+'</div>';return;}
+    var rows=r.data||[];
+    var n=rows.length, pass=rows.filter(function(x){return x.dat;}).length;
+    var avg=n? Math.round(rows.reduce(function(a,x){return a+(x.phan_tram||0);},0)/n):0;
+    $("adminStats").innerHTML=
+      '<div class="stats">'+
+      '<div class="stat"><div class="n">'+n+'</div><div class="l">Lượt làm</div></div>'+
+      '<div class="stat ok"><div class="n">'+pass+'</div><div class="l">Đạt</div></div>'+
+      '<div class="stat no"><div class="n">'+(n-pass)+'</div><div class="l">Chưa đạt</div></div>'+
+      '<div class="stat"><div class="n">'+avg+'%</div><div class="l">TB</div></div></div>';
+    var h='<tr><th>#</th><th>Họ tên</th><th>Vị trí</th><th>Điểm</th><th>%</th><th>Kết quả</th><th>Thời gian</th></tr>';
+    rows.forEach(function(x,i){
+      var t=x.created_at? new Date(x.created_at).toLocaleString('vi-VN'):'';
+      h+='<tr><td>'+(i+1)+'</td><td>'+esc(x.ho_ten)+'</td><td>'+esc(x.vi_tri)+'</td>'+
+         '<td>'+esc(x.diem)+'/'+esc(x.tong)+'</td><td>'+esc(x.phan_tram)+'%</td>'+
+         '<td class="'+(x.dat?'dat':'fail')+'">'+(x.dat?'ĐẠT':'Chưa đạt')+'</td><td>'+t+'</td></tr>';
+    });
+    if(!rows.length) h+='<tr><td colspan="7" style="text-align:center;color:var(--gray)">Chưa có ai làm bài.</td></tr>';
+    $("adminTable").innerHTML=h;
+  });
+}
+// mở nhanh trang quản lý bằng #ketqua
+if(location.hash==='#ketqua') showAdmin();
 </script>
 </body></html>
