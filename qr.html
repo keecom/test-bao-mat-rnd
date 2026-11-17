@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR — Bài kiểm tra R&amp;D</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&amp;family=Be+Vietnam+Pro:wght@400;600&amp;display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--red:#C22620;--gold:#D4AF37;--ink:#1A1A1A;--gray:#5A5A5A;--cream:#FBF6E4}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Be Vietnam Pro',Arial,sans-serif;background:#F7F3E8;color:var(--ink);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.08);padding:30px 28px;
+  max-width:420px;width:100%;text-align:center;border-top:8px solid var(--red)}
+.badge{display:inline-block;background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-weight:500;
+  font-size:12px;text-transform:uppercase;letter-spacing:.06em;padding:4px 13px;border-radius:20px}
+h1{font-family:'Oswald',sans-serif;font-size:22px;text-transform:uppercase;margin:12px 0 4px;line-height:1.2}
+.sub{font-size:13.5px;color:var(--gray);margin-bottom:18px}
+#qr{display:inline-block;padding:14px;background:#fff;border:3px solid var(--cream);border-radius:12px}
+#qr img,#qr canvas{display:block}
+.scan{font-family:'Oswald',sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.05em;
+  font-size:13px;color:var(--gray);margin:16px 0 4px}
+.lnk{font-size:12.5px;color:var(--red);word-break:break-all;font-weight:600}
+.btn{font-family:'Oswald',sans-serif;font-weight:600;font-size:14px;text-transform:uppercase;letter-spacing:.04em;
+  background:var(--gold);color:var(--ink);border:none;padding:11px 22px;border-radius:9px;cursor:pointer;margin-top:18px}
+.btn:hover{background:#C19A2E}
+.note{font-size:12px;color:#9A927C;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="badge">Phòng R&amp;D · KEECOM</span>
+  <h1>Bài kiểm tra Quy trình &amp; Bảo mật</h1>
+  <div class="sub">Quét mã QR bằng camera điện thoại để vào làm bài</div>
+  <div id="qr"></div>
+  <div class="scan">↑ Quét để làm bài</div>
+  <a class="lnk" id="lnk" href="#"></a>
+  <br>
+  <button class="btn" id="dl">⬇ Tải ảnh QR (PNG)</button>
+  <div class="note">In hoặc gửi mã này cho team R&amp;D.</div>
+</div>
+<script>
+var URL_BAI_TEST = location.origin + location.pathname.replace(/qr\.html$/,'') ;
+if(!/\/$/.test(URL_BAI_TEST)) URL_BAI_TEST += '/';
+document.getElementById('lnk').textContent = URL_BAI_TEST;
+document.getElementById('lnk').href = URL_BAI_TEST;
+var qr = new QRCode(document.getElementById('qr'), {
+  text: URL_BAI_TEST, width: 240, height: 240,
+  colorDark:'#1A1A1A', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.H
+});
+document.getElementById('dl').onclick=function(){
+  var img=document.querySelector('#qr img')||document.querySelector('#qr canvas');
+  var src = img.src || img.toDataURL('image/png');
+  var a=document.createElement('a'); a.href=src; a.download='QR-bai-kiem-tra-RND.png';
+  document.body.appendChild(a); a.click(); a.remove();
+};
+</script>
+</body></html>
