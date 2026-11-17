@@ -82,8 +82,8 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
   <div class="card" id="screenStart">
     <label class="fld">Họ và tên <span style="color:var(--red)">*</span></label>
     <input type="text" id="inName" placeholder="VD: Nguyễn Văn A" autocomplete="off">
-    <label class="fld">Mã NV / Phòng ban <span style="color:var(--red)">*</span></label>
-    <input type="text" id="inCode" placeholder="VD: KG_RND_12 hoặc Thiết kế" autocomplete="off">
+    <label class="fld">Vị trí <span style="color:var(--red)">*</span></label>
+    <input type="text" id="inCode" placeholder="VD: Thiết kế / Biên tập / Leader TK" autocomplete="off">
     <div class="hint">🔒 Có <b id="qCount">16</b> câu trắc nghiệm. Mức ĐẠT: đúng từ <b id="passN">13</b>/16 câu trở lên.</div>
     <button class="btn" id="btnStart">Bắt đầu làm bài</button>
     <div class="hint" id="startErr" style="color:var(--red)"></div>
@@ -249,7 +249,7 @@ function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()
 
 $("btnStart").onclick=function(){
   var n=$("inName").value.trim(), c=$("inCode").value.trim();
-  if(!n||!c){$("startErr").textContent="Vui lòng nhập đủ Họ tên và Mã NV/Phòng ban.";return;}
+  if(!n||!c){$("startErr").textContent="Vui lòng nhập đủ Họ tên và Vị trí.";return;}
   state.name=n; state.code=c;
   // chuẩn bị thứ tự đáp án cho từng câu
   state.order=QUESTIONS.map(function(q){
