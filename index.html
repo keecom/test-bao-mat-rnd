@@ -44,6 +44,9 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 .opt.sel .mk{border-color:var(--red);background:var(--red);color:#fff}
 .opt .tx{font-size:14.5px}
 .q.unanswered .qtext{color:var(--red)}
+.nav{display:flex;gap:12px;margin-top:20px}
+.nav .btn{margin-top:0;flex:1}
+.nav .btn.prev{flex:0 0 auto;padding-left:18px;padding-right:18px}
 .res-score{text-align:center;padding:10px 0 4px}
 .res-score .big{font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;line-height:1}
 .res-score .pct{font-size:16px;color:var(--gray);margin-top:4px}
@@ -91,11 +94,14 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 
   <!-- MÀN 2: LÀM BÀI -->
   <div class="card hidden" id="screenQuiz">
-    <div class="progress"><span id="progTxt">0/16</span><span class="pbar"><i id="progBar"></i></span></div>
+    <div class="progress"><span id="progTxt">Câu 1/16</span><span class="pbar"><i id="progBar"></i></span></div>
     <div class="who">Người làm: <b id="whoName"></b> · <span id="whoCode"></span></div>
-    <div id="quizBody"></div>
-    <button class="btn" id="btnSubmit">Nộp bài</button>
-    <div class="hint" id="submitErr" style="color:var(--red)"></div>
+    <div id="oneQ"></div>
+    <div class="nav">
+      <button class="btn ghost prev" id="btnPrev">← Quay lại</button>
+      <button class="btn" id="btnNext">Câu tiếp →</button>
+    </div>
+    <div class="hint" id="qErr" style="color:var(--red);text-align:center"></div>
   </div>
 
   <!-- MÀN 3: KẾT QUẢ -->
@@ -120,6 +126,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 var CONFIG = {
   passScore: 13,          // số câu đúng tối thiểu để ĐẠT
   shuffleOptions: true,   // xáo trộn vị trí đáp án mỗi lần
+  shuffleQuestions: true, // xáo trộn thứ tự câu hỏi theo từng người
   endpoint: ""            // URL Google Apps Script để lưu kết quả (nối sau)
 };
 
@@ -240,7 +247,8 @@ var QUESTIONS = [
 
 /* ==== LOGIC ==== */
 var $=function(id){return document.getElementById(id);};
-var state={name:"",code:"",order:[],picked:[]};
+// qOrder: thứ tự câu (đã trộn) cho người này; optOrder[origQi]: thứ tự đáp án; picked[origQi]: đáp án chọn; cur: vị trí hiện tại
+var state={name:"",code:"",qOrder:[],optOrder:[],picked:[],cur:0};
 var TOTAL=QUESTIONS.length;
 CONFIG.passScore=Math.min(CONFIG.passScore,TOTAL);
 $("qCount").textContent=TOTAL; $("passN").textContent=CONFIG.passScore;
@@ -251,63 +259,70 @@ $("btnStart").onclick=function(){
   var n=$("inName").value.trim(), c=$("inCode").value.trim();
   if(!n||!c){$("startErr").textContent="Vui lòng nhập đủ Họ tên và Vị trí.";return;}
   state.name=n; state.code=c;
-  // chuẩn bị thứ tự đáp án cho từng câu
-  state.order=QUESTIONS.map(function(q){
+  // thứ tự câu hỏi (trộn theo từng người)
+  state.qOrder=QUESTIONS.map(function(_,i){return i;});
+  if(CONFIG.shuffleQuestions) shuffle(state.qOrder);
+  // thứ tự đáp án cho từng câu (trộn)
+  state.optOrder=QUESTIONS.map(function(q){
     var idx=q.opts.map(function(_,i){return i;});
     if(CONFIG.shuffleOptions) shuffle(idx);
     return idx;
   });
   state.picked=QUESTIONS.map(function(){return -1;});
+  state.cur=0;
   $("whoName").textContent=n; $("whoCode").textContent=c;
-  renderQuiz();
+  renderOne();
   $("screenStart").classList.add("hidden");
   $("screenQuiz").classList.remove("hidden");
   window.scrollTo(0,0);
 };
 
-function renderQuiz(){
-  var html="", lastSec="";
-  QUESTIONS.forEach(function(q,qi){
-    if(q.sec!==lastSec){html+='<div class="sec-label">'+q.sec+'</div>';lastSec=q.sec;}
-    html+='<div class="q" id="q'+qi+'"><div class="qnum">Câu '+(qi+1)+'</div><div class="qtext">'+q.q+'</div>';
-    state.order[qi].forEach(function(optIdx,pos){
-      var letter="ABCD"[pos];
-      html+='<div class="opt" data-q="'+qi+'" data-opt="'+optIdx+'"><div class="mk">'+letter+'</div><div class="tx">'+q.opts[optIdx]+'</div></div>';
-    });
-    html+='</div>';
+function renderOne(){
+  var pos=state.cur;                 // vị trí trong phiên làm (0..TOTAL-1)
+  var qi=state.qOrder[pos];          // chỉ số câu gốc
+  var q=QUESTIONS[qi];
+  var html='<div class="q"><div class="qnum">Câu '+(pos+1)+' / '+TOTAL+' · '+q.sec+'</div>'+
+           '<div class="qtext">'+q.q+'</div>';
+  state.optOrder[qi].forEach(function(optIdx,k){
+    var letter="ABCD"[k];
+    var sel=(state.picked[qi]===optIdx)?' sel':'';
+    html+='<div class="opt'+sel+'" data-opt="'+optIdx+'"><div class="mk">'+letter+'</div><div class="tx">'+q.opts[optIdx]+'</div></div>';
   });
-  $("quizBody").innerHTML=html;
-  document.querySelectorAll('#quizBody .opt').forEach(function(el){
+  html+='</div>';
+  $("oneQ").innerHTML=html;
+  document.querySelectorAll('#oneQ .opt').forEach(function(el){
     el.onclick=function(){
-      var qi=+el.getAttribute('data-q'), oi=+el.getAttribute('data-opt');
-      state.picked[qi]=oi;
-      el.parentNode.querySelectorAll('.opt').forEach(function(s){s.classList.remove('sel');});
+      state.picked[qi]=+el.getAttribute('data-opt');
+      document.querySelectorAll('#oneQ .opt').forEach(function(s){s.classList.remove('sel');});
       el.classList.add('sel');
-      $("q"+qi).classList.remove('unanswered');
-      updateProgress();
+      $("qErr").textContent="";
     };
   });
+  // điều hướng
+  $("btnPrev").style.visibility = (pos===0)?'hidden':'visible';
+  $("btnNext").textContent = (pos===TOTAL-1)?'Nộp bài' : 'Câu tiếp →';
+  $("qErr").textContent="";
   updateProgress();
+  window.scrollTo(0,0);
 }
 
 function updateProgress(){
-  var done=state.picked.filter(function(x){return x>=0;}).length;
-  $("progTxt").textContent=done+"/"+TOTAL;
-  $("progBar").style.width=(done/TOTAL*100)+"%";
+  $("progTxt").textContent="Câu "+(state.cur+1)+"/"+TOTAL;
+  $("progBar").style.width=((state.cur+1)/TOTAL*100)+"%";
 }
 
-$("btnSubmit").onclick=function(){
-  var firstMiss=-1;
-  state.picked.forEach(function(p,i){
-    if(p<0){$("q"+i).classList.add('unanswered'); if(firstMiss<0)firstMiss=i;}
-  });
-  if(firstMiss>=0){
-    $("submitErr").textContent="Còn câu chưa trả lời — vui lòng hoàn thành hết.";
-    $("q"+firstMiss).scrollIntoView({behavior:'smooth',block:'center'});
+$("btnPrev").onclick=function(){
+  if(state.cur>0){state.cur--; renderOne();}
+};
+
+$("btnNext").onclick=function(){
+  var qi=state.qOrder[state.cur];
+  if(state.picked[qi]<0){
+    $("qErr").textContent="Hãy chọn một đáp án trước khi tiếp tục.";
     return;
   }
-  $("submitErr").textContent="";
-  showResult();
+  if(state.cur<TOTAL-1){ state.cur++; renderOne(); }
+  else { showResult(); }
 };
 
 function showResult(){
@@ -322,11 +337,12 @@ function showResult(){
   v.className="verdict "+(pass?"pass":"fail");
 
   var html="";
-  QUESTIONS.forEach(function(q,i){
-    var ok=state.picked[i]===q.correct;
-    html+='<div class="rev '+(ok?'ok':'no')+'"><div class="rq">Câu '+(i+1)+'. '+q.q+'</div>';
+  state.qOrder.forEach(function(qi,pos){
+    var q=QUESTIONS[qi];
+    var ok=state.picked[qi]===q.correct;
+    html+='<div class="rev '+(ok?'ok':'no')+'"><div class="rq">Câu '+(pos+1)+'. '+q.q+'</div>';
     if(!ok){
-      html+='<div class="ln you"><span class="ic">✗</span>Bạn chọn: '+q.opts[state.picked[i]]+'</div>';
+      html+='<div class="ln you"><span class="ic">✗</span>Bạn chọn: '+q.opts[state.picked[qi]]+'</div>';
     }
     html+='<div class="ln cor"><span class="ic">✓</span>Đáp án đúng: '+q.opts[q.correct]+'</div>';
     html+='<div class="exp">💡 '+q.exp+'</div></div>';
@@ -360,7 +376,7 @@ function saveResult(data){
 }
 
 $("btnRetry").onclick=function(){
-  state={name:"",code:"",order:[],picked:[]};
+  state={name:"",code:"",qOrder:[],optOrder:[],picked:[],cur:0};
   $("inName").value=""; $("inCode").value=""; $("startErr").textContent=""; $("saveMsg").textContent="";
   $("screenResult").classList.add("hidden");
   $("screenStart").classList.remove("hidden");
