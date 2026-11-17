@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="vi"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bài kiểm tra Quy trình &amp; Bảo mật — Phòng R&amp;D</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+:root{--red:#C22620;--gold:#D4AF37;--ink:#1A1A1A;--gray:#5A5A5A;--cream:#FBF6E4;--orange:#E07B00;
+  --green:#2E7D32;--line:#E3D9BC;--bg:#F7F3E8}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Be Vietnam Pro','Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--bg);
+  line-height:1.55;padding:16px;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 22px rgba(0,0,0,.06);
+  padding:22px;margin-bottom:16px}
+.head{background:var(--cream);border-left:8px solid var(--red);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.head h1{font-family:'Oswald',sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;color:var(--ink);line-height:1.2}
+.head p{font-size:13.5px;color:var(--gray);margin-top:6px}
+.badge{display:inline-block;background:var(--red);color:#fff;font-family:'Oswald',sans-serif;font-weight:600;
+  font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:4px 11px;border-radius:20px;margin-bottom:8px}
+label.fld{display:block;font-weight:600;font-size:14px;margin:12px 0 5px}
+input[type=text]{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:15px;
+  font-family:inherit;background:#FCFAF3}
+input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
+.btn{font-family:'Oswald',sans-serif;font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.04em;
+  background:var(--red);color:#fff;border:none;padding:13px 26px;border-radius:10px;cursor:pointer;width:100%;margin-top:18px}
+.btn:hover{background:#A51E19}
+.btn.ghost{background:var(--gold);color:var(--ink)}
+.btn.ghost:hover{background:#C19A2E}
+.hint{font-size:12.5px;color:var(--gray);margin-top:8px}
+.progress{position:sticky;top:0;background:var(--bg);padding:8px 0 10px;z-index:5;font-family:'Oswald',sans-serif;
+  font-weight:600;font-size:13px;color:var(--gray);display:flex;align-items:center;gap:10px}
+.pbar{flex:1;height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--orange);width:0;transition:width .25s}
+.q{margin-bottom:6px}
+.qnum{font-family:'Oswald',sans-serif;font-weight:700;color:var(--red);font-size:14px;margin-bottom:4px}
+.qtext{font-weight:600;font-size:15.5px;margin-bottom:12px}
+.opt{display:flex;gap:11px;align-items:flex-start;border:1.5px solid var(--line);border-radius:10px;
+  padding:11px 13px;margin-bottom:9px;cursor:pointer;background:#FCFAF3;transition:.12s}
+.opt:hover{border-color:var(--gold);background:#fff}
+.opt.sel{border-color:var(--red);background:#FFF6F5}
+.opt .mk{flex:0 0 22px;height:22px;border:2px solid #C9BD98;border-radius:50%;margin-top:1px;display:flex;
+  align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:12px;color:var(--gray)}
+.opt.sel .mk{border-color:var(--red);background:var(--red);color:#fff}
+.opt .tx{font-size:14.5px}
+.q.unanswered .qtext{color:var(--red)}
+.res-score{text-align:center;padding:10px 0 4px}
+.res-score .big{font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;line-height:1}
+.res-score .pct{font-size:16px;color:var(--gray);margin-top:4px}
+.verdict{display:inline-block;font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;
+  font-size:16px;padding:7px 20px;border-radius:24px;margin-top:12px}
+.verdict.pass{background:#E7F4E8;color:var(--green);border:2px solid var(--green)}
+.verdict.fail{background:#FDEBEA;color:var(--red);border:2px solid var(--red)}
+.rev{border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin-bottom:11px}
+.rev.ok{border-left:5px solid var(--green)}
+.rev.no{border-left:5px solid var(--red)}
+.rev .rq{font-weight:600;font-size:14.5px;margin-bottom:7px}
+.rev .ln{font-size:13.5px;margin:3px 0;padding-left:20px;position:relative}
+.rev .ln.you{color:var(--red)}
+.rev .ln.cor{color:var(--green);font-weight:600}
+.rev .ln .ic{position:absolute;left:0;top:0}
+.rev .exp{font-size:13px;color:var(--gray);font-style:italic;margin-top:7px;background:var(--cream);
+  padding:8px 11px;border-radius:7px}
+.sec-label{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;font-size:13px;color:var(--orange);
+  letter-spacing:.05em;margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--line)}
+.who{font-size:13px;color:var(--gray);text-align:center;margin-bottom:6px}
+.who b{color:var(--ink)}
+.hidden{display:none}
+@media(max-width:520px){.head h1{font-size:19px}.card{padding:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="badge">Phòng R&amp;D</div>
+    <h1>Bài kiểm tra Quy trình &amp; Bảo mật tài liệu</h1>
+    <p>Kiểm tra mức nắm quy trình sản phẩm và <b>nguyên tắc bảo mật file công ty</b>. Làm nghiêm túc, không trao đổi đáp án.</p>
+  </div>
+
+  <!-- MÀN 1: NHẬP THÔNG TIN -->
+  <div class="card" id="screenStart">
+    <label class="fld">Họ và tên <span style="color:var(--red)">*</span></label>
+    <input type="text" id="inName" placeholder="VD: Nguyễn Văn A" autocomplete="off">
+    <label class="fld">Mã NV / Phòng ban <span style="color:var(--red)">*</span></label>
+    <input type="text" id="inCode" placeholder="VD: KG_RND_12 hoặc Thiết kế" autocomplete="off">
+    <div class="hint">🔒 Có <b id="qCount">16</b> câu trắc nghiệm. Mức ĐẠT: đúng từ <b id="passN">13</b>/16 câu trở lên.</div>
+    <button class="btn" id="btnStart">Bắt đầu làm bài</button>
+    <div class="hint" id="startErr" style="color:var(--red)"></div>
+  </div>
+
+  <!-- MÀN 2: LÀM BÀI -->
+  <div class="card hidden" id="screenQuiz">
+    <div class="progress"><span id="progTxt">0/16</span><span class="pbar"><i id="progBar"></i></span></div>
+    <div class="who">Người làm: <b id="whoName"></b> · <span id="whoCode"></span></div>
+    <div id="quizBody"></div>
+    <button class="btn" id="btnSubmit">Nộp bài</button>
+    <div class="hint" id="submitErr" style="color:var(--red)"></div>
+  </div>
+
+  <!-- MÀN 3: KẾT QUẢ -->
+  <div class="card hidden" id="screenResult">
+    <div class="res-score">
+      <div class="big"><span id="scN">0</span><span style="font-size:26px;color:var(--gray)">/16</span></div>
+      <div class="pct"><span id="scP">0</span>% đúng</div>
+      <div><span class="verdict" id="verdict">—</span></div>
+      <div class="who" style="margin-top:12px"><b id="rName"></b> · <span id="rCode"></span></div>
+    </div>
+    <div class="sec-label">Xem lại &amp; giải thích</div>
+    <div id="reviewBody"></div>
+    <button class="btn ghost" id="btnRetry">Làm lại từ đầu</button>
+    <div class="hint" id="saveMsg" style="text-align:center"></div>
+  </div>
+
+  <div class="hint" style="text-align:center;color:#B0A88F;margin-top:4px">Nội bộ KEECOM · Phòng R&amp;D</div>
+</div>
+
+<script>
+/* ==== CẤU HÌNH ==== */
+var CONFIG = {
+  passScore: 13,          // số câu đúng tối thiểu để ĐẠT
+  shuffleOptions: true,   // xáo trộn vị trí đáp án mỗi lần
+  endpoint: ""            // URL Google Apps Script để lưu kết quả (nối sau)
+};
+
+/* ==== NGÂN HÀNG CÂU HỎI (correct = chỉ số đáp án đúng trong mảng opts) ==== */
+var QUESTIONS = [
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Nguyên tắc số 1 về bảo mật file của công ty là gì?",
+  opts:["Chỉ share file cho người trong công ty",
+        "Tuyệt đối không share file thiết kế sản phẩm ra bên ngoài",
+        "Được share nhưng phải đặt mật khẩu",
+        "Chỉ share file dung lượng nhỏ"], correct:1,
+  exp:"Nguyên tắc 1 — tuyệt đối không share file thiết kế sản phẩm ra bên ngoài."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Một đối tác bên ngoài nhắn xin bạn file nội dung cuốn sách để “tham khảo”. Bạn làm gì?",
+  opts:["Gửi vì là đối tác quen",
+        "Gửi bản PDF đầy đủ cho tiện",
+        "Từ chối — không share file nội dung SP ra ngoài trong mọi trường hợp",
+        "Hỏi bạn cùng phòng rồi gửi"], correct:2,
+  exp:"Không có ngoại lệ “đối tác quen” — tuyệt đối không share ra ngoài."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Phòng ban khác xin bạn chia sẻ nội dung/tài liệu sản phẩm để phục vụ công việc. Nguyên tắc đúng là?",
+  opts:["Gửi file thiết kế gốc để họ tự chỉnh",
+        "Gửi toàn bộ nội dung sách cho tiện",
+        "Có thể share số lượng ít ở dạng file PDF thường; không hỗ trợ file nội dung dung lượng lớn hoặc toàn bộ nội dung sách",
+        "Gửi link folder thiết kế"], correct:2,
+  exp:"Chỉ share số lượng ít dạng PDF thường; không hỗ trợ file lớn / toàn bộ nội dung sách."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Đâu KHÔNG thuộc nhóm file nguồn phải giữ bảo mật tuyệt đối?",
+  opts:["File ruột sách",
+        "File thiết kế gốc",
+        "Ảnh bìa mockup + vài trang để VHS đăng sàn",
+        "Link thiết kế sách"], correct:2,
+  exp:"Ảnh mockup + vài trang phục vụ đăng sàn là phần R&D hỗ trợ; file ruột/thiết kế gốc/link thiết kế mới là tài liệu bảo mật."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi cần dùng nội dung sách phục vụ công việc, thứ tự ưu tiên ĐÚNG là?",
+  opts:["Xin file gốc từ R&D trước cho nhanh",
+        "Ưu tiên lấy trực tiếp từ sách đã về; cần cụ thể thì Order/trao đổi với R&D",
+        "Tự tìm tải trên mạng",
+        "Mượn file của phòng khác"], correct:1,
+  exp:"Ưu tiên lấy từ sách đã về; cần cụ thể mới Order qua R&D."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"MKT cần nội dung để in/quay quảng cáo. R&D hỗ trợ thế nào?",
+  opts:["Gửi toàn bộ file nội dung sách cho tiện",
+        "Từ chối hoàn toàn",
+        "Hỗ trợ số ít trang cần thiết ở dạng ảnh/PDF thường; không gửi file dung lượng lớn/toàn bộ. Hoặc gửi cho HCNS để in ra đưa cho MKT",
+        "Bảo MKT tự mua sách về"], correct:2,
+  exp:"Hỗ trợ số ít trang ở dạng ảnh/PDF thường, hoặc gửi HCNS in ra đưa MKT."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi R&D hỗ trợ nội dung cho phòng ban khác, nên gửi ở định dạng nào?",
+  opts:["File thiết kế gốc chất lượng cao",
+        "Ảnh/PDF thường, số lượng ít; không gửi file dung lượng lớn hay toàn bộ nội dung sách",
+        "Link folder chứa file nguồn",
+        "File nén toàn bộ cuốn sách"], correct:1,
+  exp:"Chỉ hỗ trợ ở dạng ảnh/PDF thường, số lượng ít."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Người nhắn xin file là nhân viên trong công ty mình thì có được gửi cả file thiết kế gốc không?",
+  opts:["Được, vì là người nhà",
+        "Được, nếu hứa không gửi ra ngoài",
+        "Không — file thiết kế gốc là tài liệu bảo mật; chỉ Order nội dung cụ thể cần thiết qua R&D",
+        "Được, miễn là gửi nội bộ"], correct:2,
+  exp:"Bảo mật áp dụng cả với nội bộ; chỉ hỗ trợ phần nội dung cụ thể, không đưa file gốc."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Đồng nghiệp nhắn: “Gửi mình link folder thiết kế sách X để tự lấy ảnh nhé”. Phản hồi ĐÚNG nhất?",
+  opts:["Gửi link folder luôn",
+        "Copy cả folder gửi qua Zalo",
+        "Không gửi link/file nguồn; hỏi bạn cần ảnh/nội dung cụ thể nào để Order đúng phần đó qua R&D",
+        "Từ chối mà không giải thích"], correct:2,
+  exp:"Không chia sẻ link/file nguồn; hướng Order nội dung cụ thể."},
+
+ {sec:"QUY TRÌNH R&D", q:"Bước 1 của quy trình, bộ phận R&D làm gì?",
+  opts:["Thiết kế bìa sách",
+        "Tìm kiếm, phân tích và đề xuất ý tưởng SP mới (hoặc nhận SP test từ leader)",
+        "In test và khảo giá",
+        "Gửi file cho nhà in"], correct:1,
+  exp:"Bước 1 — R&D tìm/phân tích/đề xuất ý tưởng SP mới hoặc nhận SP test từ leader."},
+
+ {sec:"QUY TRÌNH R&D", q:"Sau khi hoàn thành sản phẩm, TK &amp; BT cần làm gì?",
+  opts:["Không cần làm gì, SP in xong là hoàn thành",
+        "Cập nhật file chốt lên file SP + bảng quy trình. Sau đó tải thiết kế và điền thông tin lên bảng “Xin quyền tác giả” (bản quyền)",
+        "Gửi file gốc cho đối tác giữ hộ",
+        "Gửi file cho KT lưu trữ"], correct:1,
+  exp:"Cập nhật file chốt lên file SP + bảng quy trình, sau đó đăng ký bản quyền trên bảng “Xin quyền tác giả”."},
+
+ {sec:"QUY TRÌNH R&D", q:"Khi làm ladi, cần up gì lên bảng quy trình?",
+  opts:["Chỉ up link web ladipage",
+        "Up file thiết kế ladi (Canva) + link ladi",
+        "Không cần up gì",
+        "Chỉ up ảnh chụp màn hình"], correct:1,
+  exp:"Up file thiết kế ladi (Canva) kèm link ladi lên bảng quy trình."},
+
+ {sec:"QUY TRÌNH R&D", q:"Khi có thay đổi thông tin đã đăng ký với NXB (tên sách, bìa, số trang), nhân sự thiết kế phụ trách cần làm gì?",
+  opts:["Tự sửa, không cần báo ai",
+        "Đợi cuối tháng báo một thể",
+        "Thông báo ngay cho KT chuyên trách để làm việc kịp thời với NXB và nhà in",
+        "Chỉ báo khi nhà in hỏi"], correct:2,
+  exp:"Báo ngay KT chuyên trách để tránh kéo dài thời gian ra quyết định XB và in ấn."},
+
+ {sec:"QUY TRÌNH R&D", q:"Trong lúc làm test/hoàn thiện, nếu sản phẩm có thay đổi (nội dung/thông tin), nhân sự cần làm gì?",
+  opts:["Không cần làm gì",
+        "Đợi làm xong hết mới sửa một thể",
+        "Cập nhật lại thông tin thay đổi trên bảng quản lý CV và báo cho TK/bộ phận liên quan",
+        "Tự nhớ, không cần ghi lại"], correct:2,
+  exp:"Cập nhật ngay trên bảng quản lý CV để các bộ phận nắm và phối hợp kịp thời."},
+
+ {sec:"QUY TRÌNH R&D", q:"BT và Thiết kế khi làm nội dung/thiết kế được yêu cầu làm trên nền tảng nào?",
+  opts:["Làm trên Word, up link Google Docs",
+        "Làm trên Canva; link up lên bảng quy trình là link Canva; hạn chế làm trên docs/sheet",
+        "Làm trên Photoshop rồi gửi file nặng",
+        "Tùy mỗi người chọn"], correct:1,
+  exp:"BT &amp; TK đều làm trên Canva, link up là link Canva; hạn chế docs/sheet."},
+
+ {sec:"QUY TRÌNH R&D", q:"Khi có file tiếng Thái cần check, quy trình đúng là gì?",
+  opts:["Gửi thẳng file cho người biết tiếng Thái qua Zalo cho nhanh",
+        "Điền thông tin lên sheet “Order check sách Thái” → tag QL và nhân sự phụ trách check (a. Đức Anh) để thông báo → sau khi check xong thì khóa quyền truy cập",
+        "Tự dịch bằng AI rồi dùng luôn",
+        "Đăng file lên nhóm chung nhờ mọi người check hộ"], correct:1,
+  exp:"Đi đúng kênh (sheet Order check sách Thái) + tag đúng người, và khóa quyền truy cập sau khi check xong."},
+];
+
+/* ==== LOGIC ==== */
+var $=function(id){return document.getElementById(id);};
+var state={name:"",code:"",order:[],picked:[]};
+var TOTAL=QUESTIONS.length;
+CONFIG.passScore=Math.min(CONFIG.passScore,TOTAL);
+$("qCount").textContent=TOTAL; $("passN").textContent=CONFIG.passScore;
+
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+$("btnStart").onclick=function(){
+  var n=$("inName").value.trim(), c=$("inCode").value.trim();
+  if(!n||!c){$("startErr").textContent="Vui lòng nhập đủ Họ tên và Mã NV/Phòng ban.";return;}
+  state.name=n; state.code=c;
+  // chuẩn bị thứ tự đáp án cho từng câu
+  state.order=QUESTIONS.map(function(q){
+    var idx=q.opts.map(function(_,i){return i;});
+    if(CONFIG.shuffleOptions) shuffle(idx);
+    return idx;
+  });
+  state.picked=QUESTIONS.map(function(){return -1;});
+  $("whoName").textContent=n; $("whoCode").textContent=c;
+  renderQuiz();
+  $("screenStart").classList.add("hidden");
+  $("screenQuiz").classList.remove("hidden");
+  window.scrollTo(0,0);
+};
+
+function renderQuiz(){
+  var html="", lastSec="";
+  QUESTIONS.forEach(function(q,qi){
+    if(q.sec!==lastSec){html+='<div class="sec-label">'+q.sec+'</div>';lastSec=q.sec;}
+    html+='<div class="q" id="q'+qi+'"><div class="qnum">Câu '+(qi+1)+'</div><div class="qtext">'+q.q+'</div>';
+    state.order[qi].forEach(function(optIdx,pos){
+      var letter="ABCD"[pos];
+      html+='<div class="opt" data-q="'+qi+'" data-opt="'+optIdx+'"><div class="mk">'+letter+'</div><div class="tx">'+q.opts[optIdx]+'</div></div>';
+    });
+    html+='</div>';
+  });
+  $("quizBody").innerHTML=html;
+  document.querySelectorAll('#quizBody .opt').forEach(function(el){
+    el.onclick=function(){
+      var qi=+el.getAttribute('data-q'), oi=+el.getAttribute('data-opt');
+      state.picked[qi]=oi;
+      el.parentNode.querySelectorAll('.opt').forEach(function(s){s.classList.remove('sel');});
+      el.classList.add('sel');
+      $("q"+qi).classList.remove('unanswered');
+      updateProgress();
+    };
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  var done=state.picked.filter(function(x){return x>=0;}).length;
+  $("progTxt").textContent=done+"/"+TOTAL;
+  $("progBar").style.width=(done/TOTAL*100)+"%";
+}
+
+$("btnSubmit").onclick=function(){
+  var firstMiss=-1;
+  state.picked.forEach(function(p,i){
+    if(p<0){$("q"+i).classList.add('unanswered'); if(firstMiss<0)firstMiss=i;}
+  });
+  if(firstMiss>=0){
+    $("submitErr").textContent="Còn câu chưa trả lời — vui lòng hoàn thành hết.";
+    $("q"+firstMiss).scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  $("submitErr").textContent="";
+  showResult();
+};
+
+function showResult(){
+  var score=0;
+  state.picked.forEach(function(p,i){if(p===QUESTIONS[i].correct)score++;});
+  var pct=Math.round(score/TOTAL*100);
+  var pass=score>=CONFIG.passScore;
+  $("scN").textContent=score; $("scP").textContent=pct;
+  $("rName").textContent=state.name; $("rCode").textContent=state.code;
+  var v=$("verdict");
+  v.textContent=pass?"✅ ĐẠT":"❌ CHƯA ĐẠT";
+  v.className="verdict "+(pass?"pass":"fail");
+
+  var html="";
+  QUESTIONS.forEach(function(q,i){
+    var ok=state.picked[i]===q.correct;
+    html+='<div class="rev '+(ok?'ok':'no')+'"><div class="rq">Câu '+(i+1)+'. '+q.q+'</div>';
+    if(!ok){
+      html+='<div class="ln you"><span class="ic">✗</span>Bạn chọn: '+q.opts[state.picked[i]]+'</div>';
+    }
+    html+='<div class="ln cor"><span class="ic">✓</span>Đáp án đúng: '+q.opts[q.correct]+'</div>';
+    html+='<div class="exp">💡 '+q.exp+'</div></div>';
+  });
+  $("reviewBody").innerHTML=html;
+
+  saveResult({name:state.name,code:state.code,score:score,total:TOTAL,percent:pct,pass:pass,
+    at:new Date().toISOString()});
+
+  $("screenQuiz").classList.add("hidden");
+  $("screenResult").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+function saveResult(data){
+  // luôn lưu cục bộ để không mất
+  try{
+    var arr=JSON.parse(localStorage.getItem('rnd_quiz_results')||'[]');
+    arr.push(data); localStorage.setItem('rnd_quiz_results',JSON.stringify(arr));
+  }catch(e){}
+  if(CONFIG.endpoint){
+    try{
+      fetch(CONFIG.endpoint,{method:'POST',mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(data)});
+      $("saveMsg").textContent="Đã gửi kết quả về hệ thống. Cảm ơn bạn!";
+    }catch(e){$("saveMsg").textContent="Đã ghi nhận kết quả (ngoại tuyến).";}
+  }else{
+    $("saveMsg").textContent="Đã ghi nhận kết quả. Vui lòng chụp màn hình trang này gửi HCNS nếu được yêu cầu.";
+  }
+}
+
+$("btnRetry").onclick=function(){
+  state={name:"",code:"",order:[],picked:[]};
+  $("inName").value=""; $("inCode").value=""; $("startErr").textContent=""; $("saveMsg").textContent="";
+  $("screenResult").classList.add("hidden");
+  $("screenStart").classList.remove("hidden");
+  window.scrollTo(0,0);
+};
+</script>
+</body></html>
