@@ -100,7 +100,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
     <input type="text" id="inName" placeholder="VD: Nguyễn Văn A" autocomplete="off">
     <label class="fld">Vị trí <span style="color:var(--red)">*</span></label>
     <input type="text" id="inCode" placeholder="VD: Thiết kế / Biên tập / Leader TK" autocomplete="off">
-    <div class="hint">🔒 Có <b id="qCount">16</b> câu trắc nghiệm. Mức ĐẠT: đúng từ <b id="passN">13</b>/16 câu trở lên.</div>
+    <div class="hint">🔒 Có <b id="qCount">30</b> câu trắc nghiệm. Mức ĐẠT: đúng từ <b id="passN">24</b>/<b id="qTot">30</b> câu trở lên.</div>
     <button class="btn" id="btnStart">Bắt đầu làm bài</button>
     <div class="hint" id="startErr" style="color:var(--red)"></div>
     <button class="btn ghost" id="btnGoAdmin" style="margin-top:10px;background:#EFE8D2">🔒 Xem kết quả (Quản lý)</button>
@@ -158,7 +158,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 <script>
 /* ==== CẤU HÌNH ==== */
 var CONFIG = {
-  passScore: 13,          // số câu đúng tối thiểu để ĐẠT
+  passScore: 24,          // số câu đúng tối thiểu để ĐẠT
   shuffleOptions: true,   // xáo trộn vị trí đáp án mỗi lần
   shuffleQuestions: true, // xáo trộn thứ tự câu hỏi theo từng người
   // ==== Lưu kết quả lên Supabase (tái dùng project web chấm điểm sách) ====
@@ -283,6 +283,62 @@ var QUESTIONS = [
         "Tự dịch bằng AI rồi dùng luôn",
         "Đăng file lên nhóm chung nhờ mọi người check hộ"], correct:1,
   exp:"Đi đúng kênh (sheet Order check sách Thái) + tag đúng người, và khóa quyền truy cập sau khi check xong."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi cần chia sẻ tài liệu hợp lệ ra ngoài / cho phòng ban khác, R&D nên làm gì?",
+  opts:["Gửi file thiết kế gốc chất lượng cao","Gửi link folder Canva","Xuất file PDF bản thường để chia sẻ","Gửi file in cho họ"], correct:2,
+  exp:"R&D không gửi link/file thiết kế in ấn ra ngoài; khi cần chia sẻ thì xuất PDF bản thường."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Bảng “Nghiên cứu sản phẩm” dành cho ai điền?",
+  opts:["Tất cả phòng ban","Chỉ BTV (Biên tập)","Chỉ Thiết kế","Chỉ Kế toán"], correct:1,
+  exp:"Bảng Nghiên cứu sản phẩm chỉ dành cho BTV."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"File thiết kế sau khi hoàn thiện được lưu trữ thế nào?",
+  opts:["Mỗi người giữ 1 bản trên máy","Gộp thành 1 “FILE CHỐT” duy nhất, lưu 1 folder trên Canva","Gửi qua Zalo cho cả nhóm","In ra giấy để lưu"], correct:1,
+  exp:"Thiết kế mỗi công đoạn gộp thành 1 FILE CHỐT duy nhất, lưu 1 folder trên Canva."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Cần chỉnh sửa file đã bàn giao để tái bản thì làm gì?",
+  opts:["Tự tải lại từ internet","Dùng bản cũ còn trên máy","Báo HCNS để được cấp lại file tương ứng","Nhờ phòng khác gửi hộ"], correct:2,
+  exp:"File đã chuyển quyền sở hữu cho TK Admin; tái bản → báo HCNS để được cấp lại file."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi chưa được cấp đủ quyền dùng bảng quản lý CV, hoặc phát hiện điểm chưa tối ưu, nhân sự nên làm gì?",
+  opts:["Tự ý sửa phân quyền","Báo người chuyên trách (HCNS) để được tiếp nhận xử lý","Bỏ qua, làm phần khác","Hỏi đại đồng nghiệp"], correct:1,
+  exp:"Báo người chuyên trách (HCNS) để được tiếp nhận xử lý."},
+
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Bảng “Thông tin sản phẩm”: quyền CHỈNH SỬA thuộc về ai?",
+  opts:["Tất cả phòng ban","BT & Admin","Chỉ MKT","Chỉ Kế toán"], correct:1,
+  exp:"Tất cả phòng ban được XEM; quyền chỉnh sửa chỉ BT & Admin."},
+
+ {sec:"QUY TRÌNH R&D", q:"Sau khi làm xong file thiết kế test, TK làm gì?",
+  opts:["Gửi thẳng cho nhà in","Báo lên nhóm RND để QL & BT kiểm tra, đánh giá điểm cần sửa và chỉnh sửa (nếu cần)","Tự chốt luôn không cần duyệt","Xóa file cũ đi"], correct:1,
+  exp:"Bước 6.1 — TK báo nhóm RND để QL & BT kiểm tra, đánh giá, chỉnh sửa nếu cần."},
+
+ {sec:"QUY TRÌNH R&D", q:"Trước khi gửi NXB, bản thiết kế hoàn chỉnh phải qua bước gì?",
+  opts:["Gửi luôn không cần duyệt","Quản lý duyệt bản TK hoàn chỉnh (báo QL check trong nhóm Lark); được duyệt mới gửi, không duyệt quay lại thiết kế","Đưa nhà in tự duyệt","Nhờ MKT duyệt"], correct:1,
+  exp:"Bước 13 — Quản lý duyệt bản TK hoàn chỉnh trước khi gửi NXB."},
+
+ {sec:"QUY TRÌNH R&D", q:"Bước chốt file in cuối cùng (trước khi đặt in) do ai rà soát nội dung?",
+  opts:["Chỉ Thiết kế","Chỉ Kế toán","TK và BT cùng rà soát nội dung lần cuối","Chỉ MKT"], correct:2,
+  exp:"Bước 16 — TK & BT cùng rà soát nội dung lần cuối trước khi in."},
+
+ {sec:"QUY TRÌNH R&D", q:"Kết thúc một chu kỳ sản phẩm, bước cuối là gì?",
+  opts:["In thêm vài bản dự phòng","TK & BT bàn giao File chốt vào thư mục “BÀN GIAO FILE CHỐT” và chuyển quyền sở hữu file Canva cho TK Admin","Gửi file cho đối tác giữ","Xóa toàn bộ file"], correct:1,
+  exp:"Bước 18 — bàn giao File chốt + chuyển quyền sở hữu Canva cho TK Admin."},
+
+ {sec:"QUY TRÌNH R&D", q:"Quy chuẩn đặt tên file thiết kế trên Canva là gì?",
+  opts:["Đặt tùy ý cho dễ nhớ","Mã sản phẩm – Nội dung file – Tên khác – Tên nhà xuất bản","Theo ngày tháng tạo file","Theo tên người thiết kế"], correct:1,
+  exp:"Quy chuẩn: Mã SP – Nội dung file – Tên khác – Tên NXB."},
+
+ {sec:"QUY TRÌNH R&D", q:"Order công việc thiết kế NẰM NGOÀI luồng quy trình RND (sửa ladi sau khi chạy, sửa tái bản, làm bộ ảnh sàn TMĐT…) thì dùng bảng nào?",
+  opts:["Bảng “Nghiên cứu sản phẩm”","Bảng “Order công việc TK”","Bảng “Xin quyền tác giả”","Nhắn Zalo trực tiếp cho TK"], correct:1,
+  exp:"Bảng Order công việc TK — dành cho việc thiết kế nằm ngoài luồng quy trình RND."},
+
+ {sec:"QUY TRÌNH R&D", q:"Các file/link thiết kế của sản phẩm sách ĐANG TRIỂN KHAI cần được điền ở bảng nào?",
+  opts:["Bảng “Order công việc TK”","Bảng “Qly quy trình RND”","Bảng “Nghiên cứu sản phẩm”","Bảng “Xin quyền tác giả”"], correct:1,
+  exp:"File/link thiết kế SP đang triển khai điền ở bảng Qly quy trình RND; còn Order công việc TK là cho việc thiết kế NGOÀI luồng."},
+
+ {sec:"QUY TRÌNH R&D", q:"Nếu được leader giao việc nhưng chưa được gắn (thêm) vào bảng “Qly quy trình RND”, TK cần làm gì?",
+  opts:["Cứ làm, không cần gắn vào bảng","Báo HCNS để được gán bổ sung vào bảng","Tự thêm dòng vào bảng","Bỏ qua việc đó"], correct:1,
+  exp:"Báo HCNS để được gán bổ sung vào bảng, đảm bảo công việc được theo dõi đúng."},
 ];
 
 /* ==== LOGIC ==== */
@@ -292,6 +348,7 @@ var state={name:"",code:"",qOrder:[],optOrder:[],picked:[],cur:0};
 var TOTAL=QUESTIONS.length;
 CONFIG.passScore=Math.min(CONFIG.passScore,TOTAL);
 $("qCount").textContent=TOTAL; $("passN").textContent=CONFIG.passScore;
+if($("qTot"))$("qTot").textContent=TOTAL;
 
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
