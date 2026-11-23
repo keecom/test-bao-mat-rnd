@@ -32,6 +32,12 @@ h1{font-family:'Oswald',sans-serif;font-size:22px;text-transform:uppercase;margi
   <span class="badge">Phòng R&amp;D · KEECOM</span>
   <h1>Bài kiểm tra Quy trình &amp; Bảo mật</h1>
   <div class="sub">Quét mã QR bằng camera điện thoại để vào làm bài</div>
+  <div style="text-align:left;margin:4px 0 14px">
+    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px">Tên đợt kiểm tra (để gom &amp; tách riêng từng đợt):</label>
+    <input type="text" id="dotIn" placeholder="VD: Đợt 1 - 11/2026  (để trống = không chia đợt)"
+      style="width:100%;padding:11px 13px;border:1.5px solid #E3D9BC;border-radius:10px;font-size:14px;box-sizing:border-box">
+    <div style="font-size:11.5px;color:#9A927C;margin-top:5px">Gõ tên đợt → mã QR &amp; link tự đổi theo đợt. Mỗi đợt in/gửi 1 mã riêng.</div>
+  </div>
   <div id="qr"></div>
   <div class="scan">↑ Quét để làm bài</div>
   <a class="lnk" id="lnk" href="#"></a>
@@ -40,18 +46,28 @@ h1{font-family:'Oswald',sans-serif;font-size:22px;text-transform:uppercase;margi
   <div class="note">In hoặc gửi mã này cho team R&amp;D.</div>
 </div>
 <script>
-var URL_BAI_TEST = location.origin + location.pathname.replace(/qr\.html$/,'') ;
-if(!/\/$/.test(URL_BAI_TEST)) URL_BAI_TEST += '/';
-document.getElementById('lnk').textContent = URL_BAI_TEST;
-document.getElementById('lnk').href = URL_BAI_TEST;
+var BASE = location.origin + location.pathname.replace(/qr\.html$/,'') ;
+if(!/\/$/.test(BASE)) BASE += '/';
 var qr = new QRCode(document.getElementById('qr'), {
-  text: URL_BAI_TEST, width: 240, height: 240,
+  text: BASE, width: 240, height: 240,
   colorDark:'#1A1A1A', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.H
 });
+function slugFile(s){ return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase(); }
+function render(){
+  var dot=document.getElementById('dotIn').value.trim();
+  var url = dot ? (BASE + '?dot=' + encodeURIComponent(dot)) : BASE;
+  document.getElementById('lnk').textContent = url;
+  document.getElementById('lnk').href = url;
+  qr.clear(); qr.makeCode(url);
+}
+document.getElementById('dotIn').addEventListener('input', render);
+render();
 document.getElementById('dl').onclick=function(){
   var img=document.querySelector('#qr img')||document.querySelector('#qr canvas');
   var src = img.src || img.toDataURL('image/png');
-  var a=document.createElement('a'); a.href=src; a.download='QR-bai-kiem-tra-RND.png';
+  var dot=document.getElementById('dotIn').value.trim();
+  var a=document.createElement('a'); a.href=src;
+  a.download='QR-bai-test-RND'+(dot?('-'+slugFile(dot)):'')+'.png';
   document.body.appendChild(a); a.click(); a.remove();
 };
 </script>

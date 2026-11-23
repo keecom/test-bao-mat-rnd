@@ -115,6 +115,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
     <input type="text" id="inName" placeholder="VD: Nguyễn Văn A" autocomplete="off">
     <label class="fld">Vị trí <span style="color:var(--red)">*</span></label>
     <input type="text" id="inCode" placeholder="VD: Thiết kế / Biên tập / Leader TK" autocomplete="off">
+    <div class="hint" id="dotBadge" style="display:none;background:var(--cream);border-radius:8px;padding:9px 12px;margin-bottom:10px;color:var(--ink);font-weight:600"></div>
     <div class="hint">🔒 Có <b id="qCount">30</b> câu trắc nghiệm. Mức ĐẠT: đúng từ <b id="passN">24</b>/<b id="qTot">30</b> câu trở lên.</div>
     <button class="btn" id="btnStart">Bắt đầu làm bài</button>
     <div class="hint" id="startErr" style="color:var(--red)"></div>
@@ -133,7 +134,8 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
     </div>
     <div id="adminData" class="hidden">
       <div id="adminStats"></div>
-      <div style="overflow-x:auto;margin-top:12px"><table class="rtab" id="adminTable"></table></div>
+      <div style="margin:12px 0 2px"><label style="font-size:13px;font-weight:600;margin-right:6px">Xem theo đợt:</label><select id="adminDotFilter" style="padding:7px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#FCFAF3"></select></div>
+      <div style="overflow-x:auto;margin-top:8px"><table class="rtab" id="adminTable"></table></div>
       <div class="nav">
         <button class="btn ghost prev" id="btnAdminBack2" style="background:#EFE8D2">← Về</button>
         <button class="btn" id="btnAdminRefresh">↻ Tải lại</button>
@@ -183,7 +185,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 <script>
 /* ==== CẤU HÌNH ==== */
 var CONFIG = {
-  passScore: 24,          // số câu đúng tối thiểu để ĐẠT
+  passScore: 25,          // số câu đúng tối thiểu để ĐẠT (≈80% của 31 câu)
   shuffleOptions: true,   // xáo trộn vị trí đáp án mỗi lần
   shuffleQuestions: true, // xáo trộn thứ tự câu hỏi theo từng người
   // ==== Lưu kết quả lên Supabase (tái dùng project web chấm điểm sách) ====
@@ -194,10 +196,13 @@ var CONFIG = {
 };
 var SB = (window.supabase && CONFIG.supabaseUrl && CONFIG.supabaseKey)
   ? window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey) : null;
+// Đợt kiểm tra lấy từ link ?dot=... (để gom & tách bạch từng đợt test)
+var DOT = "";
+try{ DOT=(new URLSearchParams(location.search).get('dot')||'').trim(); }catch(e){}
 
 /* ==== NGÂN HÀNG CÂU HỎI (correct = chỉ số đáp án đúng trong mảng opts) ==== */
 var QUESTIONS = [
- {sec:"BẢO MẬT FILE CÔNG TY", q:"Nguyên tắc số 1 về bảo mật file của công ty là gì?",
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Nguyên tắc số 1 về bảo mật link thiết kế công ty?",
   opts:["Chỉ share file cho người trong công ty",
         "Tuyệt đối không share file thiết kế sản phẩm ra bên ngoài",
         "Được share nhưng phải đặt mật khẩu",
@@ -215,7 +220,7 @@ var QUESTIONS = [
   opts:["Gửi file thiết kế gốc để họ tự chỉnh",
         "Gửi toàn bộ nội dung sách cho tiện",
         "Có thể share số lượng ít ở dạng file PDF thường; không hỗ trợ file nội dung dung lượng lớn hoặc toàn bộ nội dung sách",
-        "Gửi link folder thiết kế"], correct:2,
+        "Gửi link thiết kế cho tiện"], correct:2,
   exp:"Chỉ share số lượng ít dạng PDF thường; không hỗ trợ file lớn / toàn bộ nội dung sách."},
 
  {sec:"BẢO MẬT FILE CÔNG TY", q:"Đâu KHÔNG thuộc nhóm file nguồn phải giữ bảo mật tuyệt đối?",
@@ -225,14 +230,14 @@ var QUESTIONS = [
         "Link thiết kế sách"], correct:2,
   exp:"Ảnh mockup + vài trang phục vụ đăng sàn là phần R&D hỗ trợ; file ruột/thiết kế gốc/link thiết kế mới là tài liệu bảo mật."},
 
- {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi cần dùng nội dung sách phục vụ công việc, thứ tự ưu tiên ĐÚNG là?",
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Thứ tự ưu tiên khi phòng ban khác cần dùng nội dung sách?",
   opts:["Xin file gốc từ R&D trước cho nhanh",
         "Ưu tiên lấy trực tiếp từ sách đã về; cần cụ thể thì Order/trao đổi với R&D",
         "Tự tìm tải trên mạng",
         "Mượn file của phòng khác"], correct:1,
   exp:"Ưu tiên lấy từ sách đã về; cần cụ thể mới Order qua R&D."},
 
- {sec:"BẢO MẬT FILE CÔNG TY", q:"MKT cần nội dung để in/quay quảng cáo. R&D hỗ trợ thế nào?",
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi MKT nhắn xin nội dung sách để in/quay, R&D hỗ trợ thế nào?",
   opts:["Gửi toàn bộ file nội dung sách cho tiện",
         "Từ chối hoàn toàn",
         "Hỗ trợ số ít trang cần thiết ở dạng ảnh/PDF thường; không gửi file dung lượng lớn/toàn bộ. Hoặc gửi cho HCNS để in ra đưa cho MKT",
@@ -242,18 +247,18 @@ var QUESTIONS = [
  {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi R&D hỗ trợ nội dung cho phòng ban khác, nên gửi ở định dạng nào?",
   opts:["File thiết kế gốc chất lượng cao",
         "Ảnh/PDF thường, số lượng ít; tuyệt đối không share file lớn/toàn bộ hoặc link nội dung/thiết kế",
-        "Link folder chứa file nguồn",
+        "Link Canva chứa file nguồn",
         "File nén toàn bộ cuốn sách"], correct:1,
   exp:"Chỉ hỗ trợ ở dạng ảnh/PDF thường, số lượng ít."},
 
  {sec:"BẢO MẬT FILE CÔNG TY", q:"Người nhắn xin file là nhân viên trong công ty mình thì có được gửi cả file thiết kế gốc không?",
   opts:["Được, vì là người nhà",
         "Được, nếu hứa không gửi ra ngoài",
-        "Không — file thiết kế gốc là tài liệu bảo mật; chỉ Order nội dung cụ thể cần thiết qua R&D",
+        "Không — file gốc là tài liệu bảo mật",
         "Được, miễn là gửi nội bộ"], correct:2,
   exp:"Bảo mật áp dụng cả với nội bộ; chỉ hỗ trợ phần nội dung cụ thể, không đưa file gốc."},
 
- {sec:"BẢO MẬT FILE CÔNG TY", q:"Đồng nghiệp nhắn: “Gửi mình link folder thiết kế sách X để tự lấy ảnh nhé”. Phản hồi ĐÚNG nhất?",
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Đồng nghiệp xin link thiết kế để tự lấy?",
   opts:["Gửi link folder luôn",
         "Copy cả folder gửi qua Zalo",
         "Không gửi link/file nguồn; hỏi bạn cần ảnh/nội dung cụ thể nào để Order đúng phần đó qua R&D",
@@ -295,10 +300,10 @@ var QUESTIONS = [
         "Tự nhớ, không cần ghi lại"], correct:2,
   exp:"Cập nhật ngay trên bảng quản lý CV để các bộ phận nắm và phối hợp kịp thời."},
 
- {sec:"QUY TRÌNH R&D", q:"BT &amp; TK sẽ sử dụng nền tảng nào để làm nội dung/thiết kế?",
+ {sec:"QUY TRÌNH R&D", q:"BT &amp; TK sẽ sử dụng nền tảng chính nào để làm nội dung/thiết kế?",
   opts:["Làm trên Word, up link Google Docs",
         "Làm trên Canva; link up lên bảng quy trình là link Canva; hạn chế làm trên docs/sheet",
-        "Làm trên Photoshop rồi gửi file nặng",
+        "File photoshop/AI",
         "Tùy mỗi người chọn"], correct:1,
   exp:"BT &amp; TK đều làm trên Canva, link up là link Canva; hạn chế docs/sheet."},
 
@@ -364,6 +369,13 @@ var QUESTIONS = [
  {sec:"QUY TRÌNH R&D", q:"Nếu được leader giao việc nhưng chưa được gắn (thêm) vào bảng “Qly quy trình RND”, TK cần làm gì?",
   opts:["Cứ làm, không cần gắn vào bảng","Báo HCNS để được gán bổ sung vào bảng","Tự thêm dòng vào bảng","Bỏ qua việc đó"], correct:1,
   exp:"Báo HCNS để được gán bổ sung vào bảng, đảm bảo công việc được theo dõi đúng."},
+
+ {sec:"QUY TRÌNH R&D", q:"Nguyên tắc trao đổi &amp; cập nhật thông tin công việc trong team là gì?",
+  opts:["Nhắn tin riêng cho người liên quan cho nhanh",
+        "Mọi thông tin công việc phải trao đổi và cập nhật tình trạng trên nhóm chung; tuyệt đối không nhắn trao đổi riêng",
+        "Trao đổi miệng, không cần ghi lại",
+        "Ai tiện kênh nào thì dùng kênh đó"], correct:1,
+  exp:"Mọi trao đổi và cập nhật công việc đều thực hiện trên nhóm chung để minh bạch; tuyệt đối không nhắn trao đổi riêng."},
 ];
 
 /* ==== LOGIC ==== */
@@ -374,6 +386,7 @@ var TOTAL=QUESTIONS.length;
 CONFIG.passScore=Math.min(CONFIG.passScore,TOTAL);
 $("qCount").textContent=TOTAL; $("passN").textContent=CONFIG.passScore;
 if($("qTot"))$("qTot").textContent=TOTAL;
+if(DOT && $("dotBadge")){ $("dotBadge").style.display='block'; $("dotBadge").textContent='📋 Đợt kiểm tra: '+DOT; }
 
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
@@ -495,17 +508,20 @@ function saveResult(data){
   });
   if(SB){
     $("saveMsg").textContent="Đang gửi kết quả...";
-    var base={ho_ten:data.name, vi_tri:data.code, diem:data.score, tong:data.total, phan_tram:data.percent, dat:data.pass};
-    var full=Object.assign({}, base, {chi_tiet: JSON.stringify(wrongs)});
+    var core={ho_ten:data.name, vi_tri:data.code, diem:data.score, tong:data.total, phan_tram:data.percent, dat:data.pass};
+    var withDot=Object.assign({}, core, {dot: DOT||''});
+    var full=Object.assign({}, withDot, {chi_tiet: JSON.stringify(wrongs)});
+    var ok=function(){ $("saveMsg").textContent="✅ Đã gửi kết quả về hệ thống. Cảm ơn bạn!"; };
+    var fail=function(e){ $("saveMsg").textContent="⚠ Chưa gửi được kết quả lên hệ thống (đã lưu tạm trên máy)."; if(e)console.warn(e); };
+    // gửi đủ (dot + chi_tiet); nếu thiếu cột thì lùi dần, không mất bài
     SB.from(CONFIG.table).insert([full]).then(function(r){
-      if(r.error){
-        // phòng khi cột chi_tiet chưa có trên bảng -> gửi lại bản cơ bản
-        SB.from(CONFIG.table).insert([base]).then(function(r2){
-          if(r2.error){ $("saveMsg").textContent="⚠ Chưa gửi được kết quả lên hệ thống (đã lưu tạm trên máy)."; console.warn(r2.error); }
-          else { $("saveMsg").textContent="✅ Đã gửi kết quả về hệ thống. Cảm ơn bạn!"; }
+      if(!r.error){ ok(); return; }
+      SB.from(CONFIG.table).insert([withDot]).then(function(r2){
+        if(!r2.error){ ok(); return; }
+        SB.from(CONFIG.table).insert([core]).then(function(r3){
+          if(r3.error) fail(r3.error); else ok();
         });
-      }
-      else { $("saveMsg").textContent="✅ Đã gửi kết quả về hệ thống. Cảm ơn bạn!"; }
+      });
     });
   }else{
     $("saveMsg").textContent="Đã ghi nhận kết quả (ngoại tuyến).";
@@ -555,29 +571,43 @@ function loadAdmin(){
   if(!SB){$("adminStats").innerHTML='<div class="hint" style="color:var(--red)">Chưa kết nối hệ thống lưu kết quả.</div>';return;}
   SB.from(CONFIG.table).select('*').order('created_at',{ascending:false}).then(function(r){
     if(r.error){$("adminStats").innerHTML='<div class="hint" style="color:var(--red)">Lỗi tải dữ liệu: '+esc(r.error.message)+'</div>';return;}
-    var rows=r.data||[];
-    var n=rows.length, pass=rows.filter(function(x){return x.dat;}).length;
-    var avg=n? Math.round(rows.reduce(function(a,x){return a+(x.phan_tram||0);},0)/n):0;
-    $("adminStats").innerHTML=
-      '<div class="stats">'+
-      '<div class="stat"><div class="n">'+n+'</div><div class="l">Lượt làm</div></div>'+
-      '<div class="stat ok"><div class="n">'+pass+'</div><div class="l">Đạt</div></div>'+
-      '<div class="stat no"><div class="n">'+(n-pass)+'</div><div class="l">Chưa đạt</div></div>'+
-      '<div class="stat"><div class="n">'+avg+'%</div><div class="l">TB</div></div></div>';
-    window._adminRows=rows;
-    var h='<tr><th>#</th><th>Họ tên</th><th>Vị trí</th><th>Điểm</th><th>%</th><th>Kết quả</th><th>Thời gian</th><th>Câu sai</th></tr>';
-    rows.forEach(function(x,i){
-      var t=x.created_at? new Date(x.created_at).toLocaleString('vi-VN'):'';
-      h+='<tr><td>'+(i+1)+'</td><td>'+esc(x.ho_ten)+'</td><td>'+esc(x.vi_tri)+'</td>'+
-         '<td>'+esc(x.diem)+'/'+esc(x.tong)+'</td><td>'+esc(x.phan_tram)+'%</td>'+
-         '<td class="'+(x.dat?'dat':'fail')+'">'+(x.dat?'ĐẠT':'Chưa đạt')+'</td><td>'+t+'</td>'+
-         '<td><button class="minibtn" data-i="'+i+'">Chi tiết</button></td></tr>';
-    });
-    if(!rows.length) h+='<tr><td colspan="8" style="text-align:center;color:var(--gray)">Chưa có ai làm bài.</td></tr>';
-    $("adminTable").innerHTML=h;
-    document.querySelectorAll('#adminTable .minibtn').forEach(function(b){
-      b.onclick=function(){ showDetail(window._adminRows[+b.getAttribute('data-i')]); };
-    });
+    window._allRows=r.data||[];
+    var dots=[];
+    window._allRows.forEach(function(x){var d=dotOf(x); if(dots.indexOf(d)<0)dots.push(d);});
+    var sel=$("adminDotFilter");
+    sel.innerHTML='<option value="__all__">Tất cả đợt ('+window._allRows.length+')</option>'+
+      dots.map(function(d){var c=window._allRows.filter(function(x){return dotOf(x)===d;}).length;
+        return '<option value="'+d.replace(/"/g,'&quot;')+'">'+esc(d)+' ('+c+')</option>';}).join('');
+    sel.onchange=function(){ renderAdminView(sel.value); };
+    renderAdminView('__all__');
+  });
+}
+function dotOf(x){ return (x.dot && String(x.dot).trim()) ? String(x.dot).trim() : '(Không đợt)'; }
+function renderAdminView(dotFilter){
+  var all=window._allRows||[];
+  var rows=(dotFilter&&dotFilter!=='__all__') ? all.filter(function(x){return dotOf(x)===dotFilter;}) : all;
+  var n=rows.length, pass=rows.filter(function(x){return x.dat;}).length;
+  var avg=n? Math.round(rows.reduce(function(a,x){return a+(x.phan_tram||0);},0)/n):0;
+  $("adminStats").innerHTML=
+    '<div class="stats">'+
+    '<div class="stat"><div class="n">'+n+'</div><div class="l">Lượt làm</div></div>'+
+    '<div class="stat ok"><div class="n">'+pass+'</div><div class="l">Đạt</div></div>'+
+    '<div class="stat no"><div class="n">'+(n-pass)+'</div><div class="l">Chưa đạt</div></div>'+
+    '<div class="stat"><div class="n">'+avg+'%</div><div class="l">TB</div></div></div>';
+  window._adminRows=rows;
+  var h='<tr><th>#</th><th>Họ tên</th><th>Vị trí</th><th>Đợt</th><th>Điểm</th><th>%</th><th>Kết quả</th><th>Thời gian</th><th>Câu sai</th></tr>';
+  rows.forEach(function(x,i){
+    var t=x.created_at? new Date(x.created_at).toLocaleString('vi-VN'):'';
+    var dd=(x.dot&&String(x.dot).trim())?String(x.dot).trim():'—';
+    h+='<tr><td>'+(i+1)+'</td><td>'+esc(x.ho_ten)+'</td><td>'+esc(x.vi_tri)+'</td><td>'+esc(dd)+'</td>'+
+       '<td>'+esc(x.diem)+'/'+esc(x.tong)+'</td><td>'+esc(x.phan_tram)+'%</td>'+
+       '<td class="'+(x.dat?'dat':'fail')+'">'+(x.dat?'ĐẠT':'Chưa đạt')+'</td><td>'+t+'</td>'+
+       '<td><button class="minibtn" data-i="'+i+'">Chi tiết</button></td></tr>';
+  });
+  if(!rows.length) h+='<tr><td colspan="9" style="text-align:center;color:var(--gray)">Chưa có ai làm bài trong đợt này.</td></tr>';
+  $("adminTable").innerHTML=h;
+  document.querySelectorAll('#adminTable .minibtn').forEach(function(b){
+    b.onclick=function(){ showDetail(window._adminRows[+b.getAttribute('data-i')]); };
   });
 }
 function showDetail(row){
