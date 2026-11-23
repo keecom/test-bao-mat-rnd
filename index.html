@@ -82,6 +82,21 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 .stat .n{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:var(--ink)}
 .stat .l{font-size:11.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.03em}
 .stat.ok .n{color:var(--green)} .stat.no .n{color:var(--red)}
+.minibtn{font-family:'Oswald',sans-serif;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;
+  background:var(--cream);color:var(--red);border:1px solid var(--gold);border-radius:6px;padding:4px 9px;cursor:pointer;white-space:nowrap}
+.minibtn:hover{background:var(--gold);color:var(--ink)}
+.modal-bg{position:fixed;inset:0;background:rgba(26,26,26,.55);display:flex;align-items:center;justify-content:center;
+  z-index:50;padding:16px}
+.modal-box{background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:86vh;overflow:auto;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.modal-box h3{font-family:'Oswald',sans-serif;font-size:18px;text-transform:uppercase;color:var(--ink);margin-bottom:3px}
+.modal-box .who2{font-size:13px;color:var(--gray);margin-bottom:12px}
+.modal-box .wrong{border-left:5px solid var(--red);background:#FDEBEA;border-radius:8px;padding:10px 13px;margin-bottom:10px}
+.modal-box .wrong .wq{font-weight:600;font-size:14px;margin-bottom:6px}
+.modal-box .wrong .wl{font-size:13px;margin:2px 0;padding-left:18px;position:relative}
+.modal-box .wrong .wl.you{color:var(--red)} .modal-box .wrong .wl.cor{color:var(--green);font-weight:600}
+.modal-box .wl .ic{position:absolute;left:0}
+.modal-box .allok{text-align:center;color:var(--green);font-weight:600;padding:14px;font-size:15px}
+.modal-box .nodata{color:var(--gray);font-style:italic;padding:10px 0}
 @media(max-width:520px){.head h1{font-size:19px}.card{padding:17px}}
 </style>
 </head>
@@ -153,6 +168,16 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
   </div>
 
   <div class="hint" style="text-align:center;color:#B0A88F;margin-top:4px">Nội bộ KEECOM · Phòng R&amp;D</div>
+
+  <!-- MODAL CHI TIẾT CÂU SAI -->
+  <div class="modal-bg hidden" id="detailModal">
+    <div class="modal-box">
+      <h3 id="dmName">Chi tiết</h3>
+      <div class="who2" id="dmMeta"></div>
+      <div id="dmBody"></div>
+      <button class="btn" id="dmClose" style="margin-top:6px">Đóng</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -460,13 +485,26 @@ function saveResult(data){
     var arr=JSON.parse(localStorage.getItem('rnd_quiz_results')||'[]');
     arr.push(data); localStorage.setItem('rnd_quiz_results',JSON.stringify(arr));
   }catch(e){}
+  // chi tiết các câu SAI (để quản lý xem lại từng người)
+  var wrongs=[];
+  state.qOrder.forEach(function(qi){
+    var q=QUESTIONS[qi];
+    if(state.picked[qi]!==q.correct){
+      wrongs.push({q:q.q, your:q.opts[state.picked[qi]], correct:q.opts[q.correct]});
+    }
+  });
   if(SB){
     $("saveMsg").textContent="Đang gửi kết quả...";
-    SB.from(CONFIG.table).insert([{
-      ho_ten:data.name, vi_tri:data.code, diem:data.score, tong:data.total,
-      phan_tram:data.percent, dat:data.pass
-    }]).then(function(r){
-      if(r.error){ $("saveMsg").textContent="⚠ Chưa gửi được kết quả lên hệ thống (đã lưu tạm trên máy)."; console.warn(r.error); }
+    var base={ho_ten:data.name, vi_tri:data.code, diem:data.score, tong:data.total, phan_tram:data.percent, dat:data.pass};
+    var full=Object.assign({}, base, {chi_tiet: JSON.stringify(wrongs)});
+    SB.from(CONFIG.table).insert([full]).then(function(r){
+      if(r.error){
+        // phòng khi cột chi_tiet chưa có trên bảng -> gửi lại bản cơ bản
+        SB.from(CONFIG.table).insert([base]).then(function(r2){
+          if(r2.error){ $("saveMsg").textContent="⚠ Chưa gửi được kết quả lên hệ thống (đã lưu tạm trên máy)."; console.warn(r2.error); }
+          else { $("saveMsg").textContent="✅ Đã gửi kết quả về hệ thống. Cảm ơn bạn!"; }
+        });
+      }
       else { $("saveMsg").textContent="✅ Đã gửi kết quả về hệ thống. Cảm ơn bạn!"; }
     });
   }else{
@@ -526,17 +564,47 @@ function loadAdmin(){
       '<div class="stat ok"><div class="n">'+pass+'</div><div class="l">Đạt</div></div>'+
       '<div class="stat no"><div class="n">'+(n-pass)+'</div><div class="l">Chưa đạt</div></div>'+
       '<div class="stat"><div class="n">'+avg+'%</div><div class="l">TB</div></div></div>';
-    var h='<tr><th>#</th><th>Họ tên</th><th>Vị trí</th><th>Điểm</th><th>%</th><th>Kết quả</th><th>Thời gian</th></tr>';
+    window._adminRows=rows;
+    var h='<tr><th>#</th><th>Họ tên</th><th>Vị trí</th><th>Điểm</th><th>%</th><th>Kết quả</th><th>Thời gian</th><th>Câu sai</th></tr>';
     rows.forEach(function(x,i){
       var t=x.created_at? new Date(x.created_at).toLocaleString('vi-VN'):'';
       h+='<tr><td>'+(i+1)+'</td><td>'+esc(x.ho_ten)+'</td><td>'+esc(x.vi_tri)+'</td>'+
          '<td>'+esc(x.diem)+'/'+esc(x.tong)+'</td><td>'+esc(x.phan_tram)+'%</td>'+
-         '<td class="'+(x.dat?'dat':'fail')+'">'+(x.dat?'ĐẠT':'Chưa đạt')+'</td><td>'+t+'</td></tr>';
+         '<td class="'+(x.dat?'dat':'fail')+'">'+(x.dat?'ĐẠT':'Chưa đạt')+'</td><td>'+t+'</td>'+
+         '<td><button class="minibtn" data-i="'+i+'">Chi tiết</button></td></tr>';
     });
-    if(!rows.length) h+='<tr><td colspan="7" style="text-align:center;color:var(--gray)">Chưa có ai làm bài.</td></tr>';
+    if(!rows.length) h+='<tr><td colspan="8" style="text-align:center;color:var(--gray)">Chưa có ai làm bài.</td></tr>';
     $("adminTable").innerHTML=h;
+    document.querySelectorAll('#adminTable .minibtn').forEach(function(b){
+      b.onclick=function(){ showDetail(window._adminRows[+b.getAttribute('data-i')]); };
+    });
   });
 }
+function showDetail(row){
+  if(!row){return;}
+  $("dmName").textContent=row.ho_ten||'(không tên)';
+  $("dmMeta").textContent=(row.vi_tri||'')+' · '+row.diem+'/'+row.tong+' ('+row.phan_tram+'%) · '+(row.dat?'ĐẠT':'Chưa đạt');
+  var body="";
+  if(row.chi_tiet==null || row.chi_tiet===""){
+    body='<div class="nodata">Bài này làm trước khi bật tính năng xem chi tiết, nên không có dữ liệu câu sai.</div>';
+  }else{
+    var ws=[]; try{ ws=JSON.parse(row.chi_tiet); }catch(e){ ws=[]; }
+    if(!ws.length){ body='<div class="allok">🎉 Không sai câu nào!</div>'; }
+    else{
+      body='<div class="hint" style="margin-bottom:8px">Các câu đã trả lời sai ('+ws.length+'):</div>';
+      ws.forEach(function(w,i){
+        body+='<div class="wrong"><div class="wq">'+(i+1)+'. '+esc(w.q)+'</div>'+
+              '<div class="wl you"><span class="ic">✗</span>Đã chọn: '+esc(w.your)+'</div>'+
+              '<div class="wl cor"><span class="ic">✓</span>Đáp án đúng: '+esc(w.correct)+'</div></div>';
+      });
+    }
+  }
+  $("dmBody").innerHTML=body;
+  $("detailModal").classList.remove("hidden");
+}
+$("dmClose").onclick=function(){ $("detailModal").classList.add("hidden"); };
+$("detailModal").onclick=function(e){ if(e.target===this) this.classList.add("hidden"); };
+
 // mở nhanh trang quản lý bằng #ketqua
 if(location.hash==='#ketqua') showAdmin();
 </script>
