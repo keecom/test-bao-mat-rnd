@@ -82,6 +82,12 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
 .stat .n{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:var(--ink)}
 .stat .l{font-size:11.5px;color:var(--gray);text-transform:uppercase;letter-spacing:.03em}
 .stat.ok .n{color:var(--green)} .stat.no .n{color:var(--red)}
+.dotrow{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.dotrow:last-child{border-bottom:none}
+.dotrow .dn{font-weight:600;font-size:13px}
+.dotrow .ds{font-size:12px;font-weight:600}
+.dotrow .ds.o{color:var(--green)} .dotrow .ds.c{color:var(--red)}
+.dotrow .dotbtn{margin-left:auto}
 .minibtn{font-family:'Oswald',sans-serif;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;
   background:var(--cream);color:var(--red);border:1px solid var(--gold);border-radius:6px;padding:4px 9px;cursor:pointer;white-space:nowrap}
 .minibtn:hover{background:var(--gold);color:var(--ink)}
@@ -134,6 +140,7 @@ input[type=text]:focus{outline:none;border-color:var(--gold);background:#fff}
     </div>
     <div id="adminData" class="hidden">
       <div id="adminStats"></div>
+      <div id="dotManage" style="margin:12px 0;padding:11px 13px;background:#FCFAF3;border:1px solid var(--line);border-radius:10px"></div>
       <div style="margin:12px 0 2px"><label style="font-size:13px;font-weight:600;margin-right:6px">Xem theo đợt:</label><select id="adminDotFilter" style="padding:7px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#FCFAF3"></select></div>
       <div style="overflow-x:auto;margin-top:8px"><table class="rtab" id="adminTable"></table></div>
       <div class="nav">
@@ -387,6 +394,19 @@ CONFIG.passScore=Math.min(CONFIG.passScore,TOTAL);
 $("qCount").textContent=TOTAL; $("passN").textContent=CONFIG.passScore;
 if($("qTot"))$("qTot").textContent=TOTAL;
 if(DOT && $("dotBadge")){ $("dotBadge").style.display='block'; $("dotBadge").textContent='📋 Đợt kiểm tra: '+DOT; }
+// Nếu đợt đã bị ĐÓNG thì chặn không cho làm bài
+if(DOT && SB){
+  SB.from('quiz_dot_status').select('closed').eq('dot',DOT).maybeSingle().then(function(r){
+    if(!r.error && r.data && r.data.closed){
+      if($("btnStart")) $("btnStart").style.display='none';
+      if($("btnGoAdmin")) $("btnGoAdmin").style.marginTop='0';
+      if($("inName")){ $("inName").disabled=true; }
+      if($("inCode")){ $("inCode").disabled=true; }
+      var b=$("dotBadge"); b.style.display='block'; b.style.background='#FDEBEA'; b.style.color='#C22620';
+      b.textContent='📕 Đợt "'+DOT+'" đã kết thúc — không nhận bài nữa.';
+    }
+  });
+}
 
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 
@@ -579,10 +599,38 @@ function loadAdmin(){
       dots.map(function(d){var c=window._allRows.filter(function(x){return dotOf(x)===d;}).length;
         return '<option value="'+d.replace(/"/g,'&quot;')+'">'+esc(d)+' ('+c+')</option>';}).join('');
     sel.onchange=function(){ renderAdminView(sel.value); };
-    renderAdminView('__all__');
+    SB.from('quiz_dot_status').select('*').then(function(sr){
+      window._dotStatus={};
+      if(!sr.error && sr.data){ sr.data.forEach(function(s){ window._dotStatus[s.dot]=!!s.closed; }); }
+      renderDotManage();
+      renderAdminView('__all__');
+    });
   });
 }
 function dotOf(x){ return (x.dot && String(x.dot).trim()) ? String(x.dot).trim() : '(Không đợt)'; }
+function renderDotManage(){
+  var box=$("dotManage"); if(!box)return;
+  var dots=[]; (window._allRows||[]).forEach(function(x){ if(x.dot&&String(x.dot).trim()){var d=String(x.dot).trim(); if(dots.indexOf(d)<0)dots.push(d);} });
+  if(!dots.length){ box.innerHTML='<div class="hint" style="margin:0">Chưa có đợt nào. Tạo đợt ở trang QR; đợt sẽ hiện ở đây khi có người làm bài.</div>'; return; }
+  var h='<div style="font-weight:600;font-size:13px;margin-bottom:7px">Đóng / mở đợt (khóa nhận bài):</div>';
+  dots.forEach(function(d){
+    var closed=window._dotStatus&&window._dotStatus[d];
+    h+='<div class="dotrow"><span class="dn">'+esc(d)+'</span>'+
+       '<span class="ds '+(closed?'c':'o')+'">'+(closed?'● Đã đóng':'● Đang mở')+'</span>'+
+       '<button class="minibtn dotbtn" data-dot="'+d.replace(/"/g,'&quot;')+'" data-close="'+(closed?'0':'1')+'">'+(closed?'Mở lại':'Đóng đợt')+'</button></div>';
+  });
+  box.innerHTML=h;
+  box.querySelectorAll('.dotbtn').forEach(function(b){
+    b.onclick=function(){ toggleDot(b.getAttribute('data-dot'), b.getAttribute('data-close')==='1'); };
+  });
+}
+function toggleDot(dot, close){
+  if(!SB)return;
+  SB.from('quiz_dot_status').upsert({dot:dot, closed:close, updated_at:new Date().toISOString()},{onConflict:'dot'}).then(function(r){
+    if(r.error){ alert('Chưa đóng/mở được đợt — có thể bảng quiz_dot_status chưa được tạo. Báo em chạy SQL nhé.'); console.warn(r.error); return; }
+    loadAdmin();
+  });
+}
 function renderAdminView(dotFilter){
   var all=window._allRows||[];
   var rows=(dotFilter&&dotFilter!=='__all__') ? all.filter(function(x){return dotOf(x)===dotFilter;}) : all;
