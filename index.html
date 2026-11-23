@@ -204,7 +204,7 @@ var QUESTIONS = [
         "Chỉ share file dung lượng nhỏ"], correct:1,
   exp:"Nguyên tắc 1 — tuyệt đối không share file thiết kế sản phẩm ra bên ngoài."},
 
- {sec:"BẢO MẬT FILE CÔNG TY", q:"Một đối tác bên ngoài nhắn xin bạn file nội dung cuốn sách để “tham khảo”. Bạn làm gì?",
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Đối tác nhắn tin riêng xin file nội dung sách để “tham khảo”?",
   opts:["Gửi vì là đối tác quen",
         "Gửi bản PDF đầy đủ cho tiện",
         "Từ chối — không share file nội dung SP ra ngoài trong mọi trường hợp",
@@ -241,7 +241,7 @@ var QUESTIONS = [
 
  {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi R&D hỗ trợ nội dung cho phòng ban khác, nên gửi ở định dạng nào?",
   opts:["File thiết kế gốc chất lượng cao",
-        "Ảnh/PDF thường, số lượng ít; không gửi file dung lượng lớn hay toàn bộ nội dung sách",
+        "Ảnh/PDF thường, số lượng ít; tuyệt đối không share file lớn/toàn bộ hoặc link nội dung/thiết kế",
         "Link folder chứa file nguồn",
         "File nén toàn bộ cuốn sách"], correct:1,
   exp:"Chỉ hỗ trợ ở dạng ảnh/PDF thường, số lượng ít."},
@@ -260,7 +260,7 @@ var QUESTIONS = [
         "Từ chối mà không giải thích"], correct:2,
   exp:"Không chia sẻ link/file nguồn; hướng Order nội dung cụ thể."},
 
- {sec:"QUY TRÌNH R&D", q:"Bước 1 của quy trình, bộ phận R&D làm gì?",
+ {sec:"QUY TRÌNH R&D", q:"Bước đầu tiên để bắt đầu một đầu sách là gì?",
   opts:["Thiết kế bìa sách",
         "Tìm kiếm, phân tích và đề xuất ý tưởng SP mới (hoặc nhận SP test từ leader)",
         "In test và khảo giá",
@@ -295,21 +295,21 @@ var QUESTIONS = [
         "Tự nhớ, không cần ghi lại"], correct:2,
   exp:"Cập nhật ngay trên bảng quản lý CV để các bộ phận nắm và phối hợp kịp thời."},
 
- {sec:"QUY TRÌNH R&D", q:"BT và Thiết kế khi làm nội dung/thiết kế được yêu cầu làm trên nền tảng nào?",
+ {sec:"QUY TRÌNH R&D", q:"BT &amp; TK sẽ sử dụng nền tảng nào để làm nội dung/thiết kế?",
   opts:["Làm trên Word, up link Google Docs",
         "Làm trên Canva; link up lên bảng quy trình là link Canva; hạn chế làm trên docs/sheet",
         "Làm trên Photoshop rồi gửi file nặng",
         "Tùy mỗi người chọn"], correct:1,
   exp:"BT &amp; TK đều làm trên Canva, link up là link Canva; hạn chế docs/sheet."},
 
- {sec:"QUY TRÌNH R&D", q:"Khi có file tiếng Thái cần check, quy trình đúng là gì?",
+ {sec:"QUY TRÌNH R&D", q:"Quy trình khi có file tiếng Thái cần check là gì?",
   opts:["Gửi thẳng file cho người biết tiếng Thái qua Zalo cho nhanh",
         "Điền thông tin lên sheet “Order check sách Thái” → tag QL và nhân sự phụ trách check (a. Đức Anh) để thông báo → sau khi check xong thì khóa quyền truy cập",
         "Tự dịch bằng AI rồi dùng luôn",
         "Đăng file lên nhóm chung nhờ mọi người check hộ"], correct:1,
   exp:"Đi đúng kênh (sheet Order check sách Thái) + tag đúng người, và khóa quyền truy cập sau khi check xong."},
 
- {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi cần chia sẻ tài liệu hợp lệ ra ngoài / cho phòng ban khác, R&D nên làm gì?",
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"Tài liệu hợp lệ có thể chia sẻ ra ngoài / cho phòng ban khác bằng cách nào?",
   opts:["Gửi file thiết kế gốc chất lượng cao","Gửi link folder Canva","Xuất file PDF bản thường để chia sẻ","Gửi file in cho họ"], correct:2,
   exp:"R&D không gửi link/file thiết kế in ấn ra ngoài; khi cần chia sẻ thì xuất PDF bản thường."},
 
@@ -317,12 +317,12 @@ var QUESTIONS = [
   opts:["Tất cả phòng ban","Chỉ BTV (Biên tập)","Chỉ Thiết kế","Chỉ Kế toán"], correct:1,
   exp:"Bảng Nghiên cứu sản phẩm chỉ dành cho BTV."},
 
- {sec:"BẢO MẬT FILE CÔNG TY", q:"File thiết kế sau khi hoàn thiện được lưu trữ thế nào?",
+ {sec:"BẢO MẬT FILE CÔNG TY", q:"File in hoàn thiện lưu thế nào?",
   opts:["Mỗi người giữ 1 bản trên máy","Gộp thành 1 “FILE CHỐT” duy nhất, lưu 1 folder trên Canva","Gửi qua Zalo cho cả nhóm","In ra giấy để lưu"], correct:1,
   exp:"Thiết kế mỗi công đoạn gộp thành 1 FILE CHỐT duy nhất, lưu 1 folder trên Canva."},
 
  {sec:"BẢO MẬT FILE CÔNG TY", q:"Cần chỉnh sửa file đã bàn giao để tái bản thì làm gì?",
-  opts:["Tự tải lại từ internet","Dùng bản cũ còn trên máy","Báo HCNS để được cấp lại file tương ứng","Nhờ phòng khác gửi hộ"], correct:2,
+  opts:["Tự tải lại từ internet","Dùng bản cũ còn trên máy","Báo HCNS để được cấp lại file tương ứng khi chưa có quyền","Nhờ phòng khác gửi hộ"], correct:2,
   exp:"File đã chuyển quyền sở hữu cho TK Admin; tái bản → báo HCNS để được cấp lại file."},
 
  {sec:"BẢO MẬT FILE CÔNG TY", q:"Khi chưa được cấp đủ quyền dùng bảng quản lý CV, hoặc phát hiện điểm chưa tối ưu, nhân sự nên làm gì?",
@@ -341,7 +341,7 @@ var QUESTIONS = [
   opts:["Gửi luôn không cần duyệt","Quản lý duyệt bản TK hoàn chỉnh (báo QL check trong nhóm Lark); được duyệt mới gửi, không duyệt quay lại thiết kế","Đưa nhà in tự duyệt","Nhờ MKT duyệt"], correct:1,
   exp:"Bước 13 — Quản lý duyệt bản TK hoàn chỉnh trước khi gửi NXB."},
 
- {sec:"QUY TRÌNH R&D", q:"Bước chốt file in cuối cùng (trước khi đặt in) do ai rà soát nội dung?",
+ {sec:"QUY TRÌNH R&D", q:"File in chốt cuối cùng do ai rà soát?",
   opts:["Chỉ Thiết kế","Chỉ Kế toán","TK và BT cùng rà soát nội dung lần cuối","Chỉ MKT"], correct:2,
   exp:"Bước 16 — TK & BT cùng rà soát nội dung lần cuối trước khi in."},
 
@@ -357,7 +357,7 @@ var QUESTIONS = [
   opts:["Bảng “Nghiên cứu sản phẩm”","Bảng “Order công việc TK”","Bảng “Xin quyền tác giả”","Nhắn Zalo trực tiếp cho TK"], correct:1,
   exp:"Bảng Order công việc TK — dành cho việc thiết kế nằm ngoài luồng quy trình RND."},
 
- {sec:"QUY TRÌNH R&D", q:"Các file/link thiết kế của sản phẩm sách ĐANG TRIỂN KHAI cần được điền ở bảng nào?",
+ {sec:"QUY TRÌNH R&D", q:"File/link thiết kế SP mới, đang triển khai lần đầu thì điền ở bảng nào?",
   opts:["Bảng “Order công việc TK”","Bảng “Qly quy trình RND”","Bảng “Nghiên cứu sản phẩm”","Bảng “Xin quyền tác giả”"], correct:1,
   exp:"File/link thiết kế SP đang triển khai điền ở bảng Qly quy trình RND; còn Order công việc TK là cho việc thiết kế NGOÀI luồng."},
 
